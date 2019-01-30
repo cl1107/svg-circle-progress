@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script>
+      function d2a(n) {
+        let a = (n * Math.PI) / 180;
+        return a;
+      }
+
+      let cx = 400,
+        cy = 300,
+        r = 200;
+      window.onload = function() {
+        let oSvg = document.getElementById('svg1');
+
+        let data = [
+          800,
+          800,
+          800,
+          800,
+          800,
+          800,
+          800,
+          800,
+          800,
+          800,
+          800,
+          800,
+          800,
+          800
+        ];
+
+        let sum = 0;
+        data.forEach(item => (sum += item));
+
+        let now = 0;
+        data.forEach(item => {
+          let ang = (360 * item) / sum - 5;
+
+          let color = Math.floor(Math.random() * 16777216).toString(16);
+          while (color.length < 6) color = '0' + color;
+          //pie(now, now+ang, `rgb(${Math.floor(Math.random()*256)},${Math.floor(Math.random()*256)},${Math.floor(Math.random()*256)})`);
+          pie(now, now + ang, '#' + color);
+          now += ang + 5;
+        });
+
+        function pie(ang1, ang2, color) {
+          let oP = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'path'
+          );
+          oP.style.fill = color;
+          oP.style.clipPath = 'url(#clipEle)';
+          oSvg.appendChild(oP);
+
+          let arr = [];
+
+          function getPoint(ang, r) {
+            let x = cx + Math.sin(d2a(ang)) * r;
+            let y = cy - Math.cos(d2a(ang)) * r;
+            return {
+              x,
+              y
+            };
+          }
+
+          //#1
+          let { x: x1, y: y1 } = getPoint(ang1, r);
+          let { x: xStart, y: yStart } = getPoint(ang1, r - 20);
+
+          //arr.push(`M ${cx} ${cy} L ${x1} ${y1}`);
+          arr.push(`M ${xStart} ${yStart} L ${x1} ${y1}`);
+
+          //#2
+          let { x: x2, y: y2 } = getPoint(ang2, r);
+          //        A  rx   ry  x旋转 大弧 镜像 终点x    y
+          //arr.push(`A ${r} ${r}   0    0    1   ${x2} ${y2}`);
+          arr.push(`A ${r} ${r} 0 ${ang2 - ang1 >= 180 ? 1 : 0} 1 ${x2} ${y2}`);
+
+          let { x: shortEndX, y: shortEndY } = getPoint(ang2, r - 20);
+          arr.push(`L ${shortEndX} ${shortEndY}`);
+
+          arr.push(
+            `A ${r - 20} ${r - 20} 0 ${
+              ang2 - ang1 >= 180 ? 1 : 0
+            } 0 ${xStart} ${yStart}`
+          );
+          //#3
+          arr.push('Z');
+
+          oP.setAttribute('d', arr.join(' '));
+        }
+      };
+
+      /**
+       *根据百分比数值进行剪切
+       *ang 传入的角度
+       **/
+      function setClip(ang) {
+        //根据角度获取终点坐标值，起始值固定为0
+        function getEndPoint(ang) {
+          return {
+            x: cx + Math.sin(d2a(ang)) * r,
+            y: cy - Math.cos(d2a(ang)) * r
+          };
+        }
+
+        let arr = [];
+
+        arr.push(`M 400 300 L 400 100`);
+
+        let { x: xEndPoint, y: yEndPoint } = getEndPoint(ang);
+
+        arr.push(
+          `A 200 200 0 ${ang >= 180 ? 1 : 0} 1 ${xEndPoint} ${yEndPoint}`
+        );
+
+        arr.push('Z');
+
+        let op = document.getElementById('clipPath');
+        //let d = "M 400 300 L 600 300 A 200 200 0 0 1 400 500 Z";
+        op.setAttribute('d', arr.join(' '));
+      }
+
+      function touchProgress(event) {
+        event.preventDefault();
+        setClip(document.getElementById('setVal').value);
+      }
+    </script>
+  </head>
+  <body>
+    <form onsubmit="touchProgress(event)">
+      ang: <input type="number" min="1" max="359" id="setVal" />
+      <input type="submit" value="按角度剪切" />
+    </form>
+    <svg width="800" height="600" id="svg1">
+      <defs>
+        <clipPath id="clipEle">
+          <path id="clipPath" d="M 400 100 A 200 200 1 1 1 399.9999 100" />
+        </clipPath>
+      </defs>
+    </svg>
+  </body>
+</html>

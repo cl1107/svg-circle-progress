@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+  </head>
+  <body>
+    <svg
+      id="svg"
+      version="1.1"
+      baseProfile="full"
+      width="400"
+      height="400"
+      xmlns="http://www.w3.org/2000/svg"
+    ></svg>
+
+    <form onsubmit="touchProgress(event)">
+      ang: <input type="number" min="0" max="360" id="setVal" />
+      <input type="submit" value="确定" />
+    </form>
+
+    <script>
+      let cx = 200,
+        cy = 200,
+        r = 180;
+
+      function getPoint(ang, r) {
+        let x = cx + Math.sin(d2a(ang)) * r;
+        let y = cy - Math.cos(d2a(ang)) * r;
+        return {
+          x,
+          y
+        };
+      }
+
+      function d2a(n) {
+        let a = (n * Math.PI) / 180;
+        return a;
+      }
+
+      function pie(startAngle, endAngle) {
+        let { x: startX, y: startY } = getPoint(startAngle, r);
+        let { x: endX, y: endY } = getPoint(endAngle, r);
+        return `M${startX} ${startY} A180 180 0 0 1 ${endX} ${endY}`;
+      }
+
+      function getFullPath(angle) {
+        let arr = [];
+        let startAngle = 0;
+        let transformAngle = (angle / 360) * 60;
+        let length = Math.floor(transformAngle); //angle 转 length，来画各种弧长，length60一个圆，30半圆
+        if (!length) {
+          length = 1;
+        }
+        if (angle <= 6) {
+          let peerAngle = 1;
+          let polyLine = pie(startAngle, angle);
+          return polyLine;
+        } else {
+          for (let i = 0; i < length; i++) {
+            let peerAngle = 5;
+            let divideAngle = 1;
+            let polyLine = pie(startAngle, startAngle + peerAngle);
+            arr.push(polyLine);
+            startAngle += peerAngle + divideAngle;
+
+            if (i === length - 1) {
+              let remainAngle = transformAngle - Math.floor(transformAngle);
+              if (remainAngle) {
+                let remainPolyLine = pie(
+                  startAngle,
+                  startAngle + remainAngle * 6
+                );
+                arr.push(remainPolyLine);
+              }
+              return arr.join(' ');
+            }
+          }
+        }
+      }
+
+      function draw(color, angle) {
+        let svg = document.getElementById('svg');
+        var nodeList = svg.childNodes;
+        for (var i = nodeList.length - 1; i >= 0; i--) {
+          svg.removeChild(nodeList[i]);
+        }
+
+        let oP = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        oP.style.fill = 'transparent';
+        oP.style.stroke = color;
+        oP.style.strokeWidth = '20';
+        svg.appendChild(oP);
+        oP.setAttribute('d', getFullPath(angle));
+      }
+
+      function touchProgress(event) {
+        event.preventDefault();
+        let angle = document.getElementById('setVal').value;
+        draw('red', angle);
+      }
+
+      draw('red', 80);
+    </script>
+  </body>
+</html>
